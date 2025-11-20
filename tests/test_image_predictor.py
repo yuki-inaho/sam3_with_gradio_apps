@@ -1,8 +1,11 @@
+from pathlib import Path
+
 import torch
 from PIL import Image
 import pytest
 
 from sam3.model.sam3_image_processor import Sam3Processor
+from sam3.model_builder import build_sam3_image_model
 
 
 class DummyPrompt:
@@ -115,3 +118,24 @@ def test_processor_cuda118_compatibility():
 
     assert state["boxes"].is_cuda
     assert state["masks_logits"].is_cuda
+
+
+@pytest.mark.slow
+def test_real_checkpoint_image_inference():
+    project_root = Path(__file__).resolve().parents[1]
+    ckpt_path = project_root / "models" / "sam3.pt"
+    if not ckpt_path.exists():
+        pytest.skip("models/sam3.pt が存在しないためスキップ")
+
+    device = "cpu"
+    model = build_sam3_image_model(
+        checkpoint_path=str(ckpt_path),
+        load_from_HF=False,
+        device=device,
+        eval_mode=True,
+        enable_segmentation=False,
+        enable_inst_interactivity=False,
+        compile=False,
+    )
+
+    assert next(model.parameters()).device.type == device

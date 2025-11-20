@@ -1,5 +1,6 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved
 from typing import Dict, List
+import logging
 
 import numpy as np
 import PIL
@@ -187,6 +188,9 @@ class Sam3Processor:
             geometric_prompt=state["geometric_prompt"],
             find_target=None,
         )
+
+        # DEBUG: Log available output keys
+        logging.error(f"[DEBUG] forward_grounding outputs.keys(): {list(outputs.keys())}")
 
         out_bbox = outputs["pred_boxes"]
         out_logits = outputs["pred_logits"]

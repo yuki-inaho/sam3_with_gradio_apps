@@ -1,8 +1,11 @@
+from pathlib import Path
+
 import pytest
 import torch
 from PIL import Image
 
 from sam3.model.sam3_video_predictor import Sam3VideoPredictor
+from sam3.model_builder import build_sam3_video_model
 
 
 class DummyVideoModel:
@@ -151,3 +154,21 @@ def test_video_predictor_cuda118(monkeypatch, tmp_path):
     predictor.shutdown()
 
     assert getattr(dummy_model, "cuda_called", False)
+
+
+@pytest.mark.slow
+def test_build_video_model_with_real_checkpoint():
+    project_root = Path(__file__).resolve().parents[1]
+    ckpt_path = project_root / "models" / "sam3.pt"
+    if not ckpt_path.exists():
+        pytest.skip("models/sam3.pt が存在しないためスキップ")
+
+    model = build_sam3_video_model(
+        checkpoint_path=str(ckpt_path),
+        load_from_HF=False,
+        device="cpu",
+        apply_temporal_disambiguation=False,
+        compile=False,
+    )
+
+    assert next(model.parameters()).device.type == "cpu"

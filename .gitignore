@@ -140,6 +140,7 @@ sam3_logs/
 logs/
 runs/
 tensorboard/
+temp/
 
 # OS specific
 .DS_Store
