@@ -104,6 +104,43 @@ class ImagePredictorApp:
         self.prompt_state.add_box(x1, y1, x2, y2, label)
         logger.debug(f"Box added: ({x1}, {y1}, {x2}, {y2}), label={label}")
 
+
+    def get_image_with_overlay(self) -> Optional[Image.Image]:
+        """Get the current image with prompts (points/boxes) overlaid.
+
+        Returns:
+            PIL Image with prompts visualized, or None if no image is set.
+        """
+        if self.prompt_state.image is None:
+            return None
+
+        from PIL import ImageDraw
+
+        # Copy the image to avoid modifying the original
+        overlay = self.prompt_state.image.copy()
+        draw = ImageDraw.Draw(overlay)
+
+        # Draw points
+        for point in self.prompt_state.points:
+            color = (0, 255, 0) if point.label == 1 else (255, 0, 0)  # Green for include, Red for exclude
+            radius = 5
+            draw.ellipse(
+                [(point.x - radius, point.y - radius), (point.x + radius, point.y + radius)],
+                fill=color,
+                outline="white",
+                width=2,
+            )
+
+        # Draw boxes
+        for box in self.prompt_state.boxes:
+            color = (0, 255, 0) if box.label == 1 else (255, 0, 0)  # Green for include, Red for exclude
+            draw.rectangle(
+                [(box.x1, box.y1), (box.x2, box.y2)],
+                outline=color,
+                width=3,
+            )
+
+        return overlay
     def clear_prompts(self) -> None:
         """Clear all prompts while keeping the image.
 

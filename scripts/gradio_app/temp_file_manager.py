@@ -124,8 +124,22 @@ class TempFileManager:
         logger.info(f"Creating video: {video_path} ({len(frames)} frames @ {fps} fps)")
 
         # Get video dimensions from first frame
-        if not isinstance(frames[0], np.ndarray):
-            raise ValueError(f"frames[0] must be a numpy array, got {type(frames[0])}")
+        # Convert PIL Images to numpy arrays if needed
+        converted_frames = []
+        for idx, frame in enumerate(frames):
+            if isinstance(frame, Image.Image):
+                # Convert PIL Image to RGB numpy array
+                frame = np.array(frame.convert("RGB"))
+            elif not isinstance(frame, np.ndarray):
+                raise ValueError(
+                    f"frame {idx} must be a PIL Image or numpy array, got {type(frame)}"
+                )
+            converted_frames.append(frame)
+        
+        frames = converted_frames
+        if not frames:
+            raise ValueError("No valid frames after conversion")
+
 
         height, width = frames[0].shape[:2]
 
@@ -142,10 +156,6 @@ class TempFileManager:
 
             # Write frames
             for idx, frame in enumerate(frames):
-                if not isinstance(frame, np.ndarray):
-                    raise ValueError(
-                        f"frame {idx} must be a numpy array, got {type(frame)}"
-                    )
 
                 if frame.shape[:2] != (height, width):
                     raise ValueError(
