@@ -40,8 +40,11 @@ dependencies = [
     "einops>=0.8.1",
     "decord>=0.6.0",
     "psutil>=5.9",
-    "gradio>=4.0",
+    "gradio>=5.0",
+    "typer>=0.15.0",
+    "opencv-python",
     "gradio-bbox-annotator>=0.1.1",
+    "pycocotools>=2.0.10",
 ]
 
 [project.optional-dependencies]

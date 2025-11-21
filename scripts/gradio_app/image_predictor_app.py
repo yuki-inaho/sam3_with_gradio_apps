@@ -224,9 +224,22 @@ class ImagePredictorApp:
                 f"Running with prompts: text={bool(effective_text)}, "
                 f"points={len(effective_points)}, boxes={len(effective_boxes)}"
             )
+            # Get current mode for explicit TEXT_ONLY handling
+            from scripts.gradio_app.prompt_types import PromptMode
+            current_mode = self.prompt_state.get_prompt_mode()
 
-            # Run inference based on prompts
-            if effective_text:
+            # TEXT_ONLY mode: single call handles everything
+            if current_mode == PromptMode.TEXT_ONLY:
+                if not effective_text:
+                    raise ValueError(
+                        "TEXT_ONLY mode requires a text prompt. "
+                        "Please enter a text description."
+                    )
+                
+                logger.info(f"Running TEXT_ONLY inference with prompt: '{effective_text}'")
+                state = processor.set_text_prompt(effective_text, state)
+            # Other modes: handle text + geometric prompts
+            elif effective_text:
                 # Text prompt
                 state = processor.set_text_prompt(effective_text, state)
 

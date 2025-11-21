@@ -758,6 +758,27 @@ class SequenceTrackerApp:
 
                 predictor.handle_request(request=req)
 
+                # Initialize cache by propagating on prompt frame first
+                logger.info(f"Initializing cache by propagating on prompt frame {prompt_frame_idx}")
+                try:
+                    for init_response in predictor.handle_stream_request(
+                        request=dict(
+                            type="propagate_in_video",
+                            session_id=session_id,
+                        )
+                    ):
+                        # Process only the prompt frame to populate cache
+                        init_frame_idx = init_response["frame_index"]
+                        if init_frame_idx == prompt_frame_idx:
+                            logger.info(f"Cache initialized on frame {init_frame_idx}")
+                            break
+                        elif init_frame_idx > prompt_frame_idx:
+                            # Already past the prompt frame, cache should be ready
+                            break
+                except Exception as e:
+                    logger.warning(f"Failed to initialize cache: {e}")
+                    # Continue anyway - the main propagation might still work
+
             # Propagate and collect outputs
             masks_per_frame: Dict[int, np.ndarray] = {}
             obj_ids_set: set[int] = set()

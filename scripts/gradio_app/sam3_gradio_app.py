@@ -91,14 +91,14 @@ class Sam3GradioApp:
 
                     prompt_mode = gr.Radio(
                         label="Prompt Mode",
-                        # TEXT_ONLY は Sequence では使用しない
                         choices=[
+                            "TEXT_ONLY",       # Text-only prompting (no points/boxes)
                             "POINTS_ONLY",
                             "BOXES_ONLY",
                             "TEXT_AND_POINTS",
                             "TEXT_AND_BOXES",
                         ],
-                        value="POINTS_ONLY",
+                        value="TEXT_ONLY"  # Default to simplest mode,
                     )
 
                     point_type = gr.Radio(
@@ -348,7 +348,8 @@ class Sam3GradioApp:
         comp["prompt_mode"].change(
             fn=self._on_prompt_mode_change,
             inputs=[comp["prompt_mode"]],
-            outputs=[comp["input_image"], comp["bbox_annotator"]],
+            outputs=[comp["input_image"], comp["bbox_annotator"], comp["point_type"]],
+            queue=False,  # Disable queueing for immediate processing
         )
 
         # Text prompt change event
@@ -639,7 +640,7 @@ class Sam3GradioApp:
             mode: Selected prompt mode string.
 
         Returns:
-            Tuple of gr.update() for (input_image, bbox_annotator) visibility.
+            Tuple of gr.update() for (input_image, bbox_annotator, point_type) visibility.
         """
         try:
             from scripts.gradio_app.prompt_types import PromptMode
@@ -651,11 +652,13 @@ class Sam3GradioApp:
             # Determine which component to show based on mode
             # Box modes: show bbox_annotator, hide input_image
             # Other modes: show input_image, hide bbox_annotator
+            is_text_only = mode == "TEXT_ONLY"  # Hide point_type for text-only mode
             is_box_mode = mode in ["BOXES_ONLY", "TEXT_AND_BOXES"]
 
             return (
                 gr.update(visible=not is_box_mode),  # input_image
                 gr.update(visible=is_box_mode),  # bbox_annotator
+                gr.update(visible=not is_text_only),  # point_type
             )
 
         except Exception as e:
