@@ -200,6 +200,7 @@ class SequenceTrackerApp:
 
             # Update prompt_state
             self.prompt_state.set_prompt_frame(frame_idx)
+            self.prompt_state.set_current_frame(frame_image)
 
             logger.info(f"Extracted frame {frame_idx} from video")
 

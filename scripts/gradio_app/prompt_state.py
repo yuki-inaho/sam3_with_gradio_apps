@@ -197,6 +197,7 @@ class VideoPromptState(PromptState):
         self.frame_range: tuple[int, int] = (0, 0)  # (start, end)
         self.stride: int = 1
         self.direction: str = "forward"  # "forward", "backward", "both"
+        self.current_frame: Optional[Image.Image] = None
 
     def set_video(self, video_path: str) -> None:
         """Set the video path.
@@ -288,3 +289,48 @@ class VideoPromptState(PromptState):
         super().reset()
         # Keep video metadata, only reset prompts and prompt frame
         self.prompt_frame_idx = 0
+
+    def set_current_frame(self, frame: Image.Image) -> None:
+        """Set the current prompt frame image.
+        
+        Args:
+            frame: PIL Image of the current prompt frame.
+        """
+        self.current_frame = frame
+
+    def get_frame_with_overlay(self) -> Optional[Image.Image]:
+        """Get the current frame with prompts (points/boxes) overlaid.
+
+        Returns:
+            PIL Image with prompts visualized, or None if no frame is set.
+        """
+        if self.current_frame is None:
+            return None
+
+        from PIL import ImageDraw
+
+        # Copy the frame to avoid modifying the original
+        overlay = self.current_frame.copy()
+        draw = ImageDraw.Draw(overlay)
+
+        # Draw points
+        for point in self.points:
+            color = (0, 255, 0) if point.label == 1 else (255, 0, 0)  # Green for include, Red for exclude
+            radius = 5
+            draw.ellipse(
+                [(point.x - radius, point.y - radius), (point.x + radius, point.y + radius)],
+                fill=color,
+                outline="white",
+                width=2,
+            )
+
+        # Draw boxes
+        for box in self.boxes:
+            color = (0, 255, 0) if box.label == 1 else (255, 0, 0)  # Green for include, Red for exclude
+            draw.rectangle(
+                [(box.x1, box.y1), (box.x2, box.y2)],
+                outline=color,
+                width=3,
+            )
+
+        return overlay
